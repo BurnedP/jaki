@@ -12,7 +12,7 @@ local Prefs = require("prefs")
 
 local NewsService = {}
 
-local DEFAULT_FEED = "https://feeds.bbci.co.uk/news/world/rss.xml"
+local DEFAULT_FEED = "https://www.theguardian.com/world/rss"
 local MAX_ITEMS = 25
 
 local function stripTags(s)
@@ -23,6 +23,29 @@ local function stripTags(s)
     s = s:gsub("&quot;", '"'):gsub("&#39;", "'"):gsub("&#x27;", "'"):gsub("&nbsp;", " ")
     s = s:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
     return s
+end
+
+--- Pick the cleanest category from a feed entry: the first short,
+--- section-like tag, falling back to the shortest, else nil.
+local function pickTag(block, is_atom)
+    local cats = {}
+    if is_atom then
+        for c in block:gmatch('<category[^>]-term="(.-)"') do
+            local t = stripTags(c)
+            if t ~= "" then table.insert(cats, t) end
+        end
+    else
+        for c in block:gmatch("<category.->(.-)</category>") do
+            local t = stripTags(c)
+            if t ~= "" then table.insert(cats, t) end
+        end
+    end
+    local shortest, first_short
+    for _, t in ipairs(cats) do
+        if #t <= 18 and not first_short then first_short = t end
+        if not shortest or #t < #shortest then shortest = t end
+    end
+    return first_short or shortest
 end
 
 local function getRaw(url)
@@ -63,7 +86,7 @@ function NewsService.refresh()
                 title = stripTags(title),
                 link = block:match("<link.->(.-)</link>"),
                 desc = stripTags(block:match("<description.->(.-)</description>")),
-                tag = stripTags(block:match("<category.->(.-)</category>")),
+                tag = pickTag(block, false),
             })
         end
         if #items >= MAX_ITEMS then break end
@@ -79,7 +102,7 @@ function NewsService.refresh()
                     link = block:match('<link.-href="(.-)"'),
                     desc = stripTags(block:match("<summary.->(.-)</summary>")
                         or block:match("<content.->(.-)</content>")),
-                    tag = block:match('<category[^>]-term="(.-)"'),
+                    tag = pickTag(block, true),
                 })
             end
             if #items >= MAX_ITEMS then break end
