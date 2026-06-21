@@ -150,25 +150,50 @@ end
 
 -- ── Columns ──────────────────────────────────────────────────────────
 
+--- Tappable column header (label + chevron) that opens the full screen.
+local function colHeader(app, label, target, colW)
+    local Assets = require("assets")
+    local hg = HorizontalGroup:new{ align = "center" }
+    table.insert(hg, H.sectionHeader(label))
+    local chev = H.icon(Assets.icon("chevron.svg"), H.s(20))
+    if chev then
+        table.insert(hg, H.hspan(H.s(8)))
+        table.insert(hg, chev)
+    end
+    return H.tap(
+        LeftContainer:new{ dimen = Geom:new{ w = colW, h = H.s(34) }, hg },
+        function() app:go(target) end)
+end
+
 local function todoColumn(app, colW)
-    local g = Todos.grouped()
+    local active, done = Todos.today()
     local col = VerticalGroup:new{ align = "left" }
-    table.insert(col, H.sectionHeader("To-Dos"))
+    table.insert(col, colHeader(app, "To-Dos", "todos", colW))
     table.insert(col, H.vspan(H.s(8)))
     table.insert(col, H.hline(colW))
-    if #g.today == 0 then
+    if #active == 0 and #done == 0 then
         table.insert(col, H.vspan(H.s(10)))
         table.insert(col, H.text("All clear", H.SIZE.meta, false, GRAY))
         return col
     end
-    for i = 1, math.min(MAX_ITEMS, #g.today) do
-        local todo = g.today[i]
-        local row = HorizontalGroup:new{ align = "top" }
-        table.insert(row, H.box(H.s(24), todo.done))
-        table.insert(row, H.hspan(H.s(12)))
-        table.insert(row, H.wrap(todo.text, colW - H.s(42), 2, H.SIZE.body))
+    local shown = 0
+    for _, todo in ipairs(active) do
+        if shown >= MAX_ITEMS then break end
+        shown = shown + 1
+        local t = todo
         table.insert(col, H.vspan(H.s(12)))
-        table.insert(col, H.tap(row, function() Todos.toggle(todo.id); app:rerender() end))
+        table.insert(col, H.tap(H.wrap(t.text, colW, 2, H.SIZE.body),
+            function() Todos.toggle(t.id); app:rerender() end))
+    end
+    for _, todo in ipairs(done) do
+        if shown >= MAX_ITEMS then break end
+        shown = shown + 1
+        local t = todo
+        table.insert(col, H.vspan(H.s(12)))
+        table.insert(col, H.tap(
+            LeftContainer:new{ dimen = Geom:new{ w = colW, h = H.s(36) },
+                H.strikeText(t.text, H.SIZE.body, colW, false, true, GRAY) },
+            function() Todos.toggle(t.id); app:rerender() end))
     end
     return col
 end
@@ -176,7 +201,7 @@ end
 local function habitColumn(app, colW)
     local habits = Habits.list()
     local col = VerticalGroup:new{ align = "left" }
-    table.insert(col, H.sectionHeader("Habits"))
+    table.insert(col, colHeader(app, "Habits", "habits", colW))
     table.insert(col, H.vspan(H.s(8)))
     table.insert(col, H.hline(colW))
     if #habits == 0 then

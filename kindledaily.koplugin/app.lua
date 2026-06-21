@@ -28,13 +28,23 @@ local H = require("ui_helpers")
 
 local Screen = Device.screen
 
--- Screen modules: each exposes render(app) -> widget (the body content).
+-- All renderable screens (router). NAV controls only the bottom tab bar.
+local SCREENS = {
+    home     = "screen_home",
+    todos    = "screen_todos",
+    habits   = "screen_habits",
+    weather  = "screen_weather",
+    news     = "screen_news",
+    settings = "screen_settings",
+}
+
+-- Bottom navigation tabs. To-Dos and Habits are reached by tapping their
+-- column headers on Home, so they're intentionally not tabs here.
 local NAV = {
-    { key = "home",     label = "Home",    module = "screen_home" },
-    { key = "todos",    label = "To-Dos",  module = "screen_todos" },
-    { key = "habits",   label = "Habits",  module = "screen_habits" },
-    { key = "weather",  label = "Weather", module = "screen_weather" },
-    { key = "settings", label = "Settings", module = "screen_settings" },
+    { key = "home",     label = "Home" },
+    { key = "weather",  label = "Weather" },
+    { key = "news",     label = "News" },
+    { key = "settings", label = "Settings" },
 }
 
 local App = InputContainer:extend{
@@ -56,6 +66,9 @@ function App:init()
     end
 
     self:_build()
+
+    self._clock_alive = true
+    self:_scheduleClock()
 end
 
 --- Public: rebuild the whole tree and refresh the screen.
@@ -64,6 +77,16 @@ function App:rerender()
     if self.dimen then
         UIManager:setDirty(self, "ui")
     end
+end
+
+--- Refresh once per minute so the status-bar clock stays current.
+function App:_scheduleClock()
+    local secs = 60 - (os.time() % 60)
+    UIManager:scheduleIn(secs, function()
+        if not self._clock_alive then return end
+        self:rerender()
+        self:_scheduleClock()
+    end)
 end
 
 --- Switch tabs.
@@ -155,11 +178,7 @@ function App:_navBar()
 end
 
 function App:_body()
-    local mod_name
-    for _, item in ipairs(NAV) do
-        if item.key == self.screen then mod_name = item.module end
-    end
-    mod_name = mod_name or "screen_home"
+    local mod_name = SCREENS[self.screen] or "screen_home"
 
     local body
     local ok, screen = pcall(require, mod_name)
@@ -295,6 +314,7 @@ end
 
 --- Clear the shared "open" flag whenever the app is dismissed (any path).
 function App:onCloseWidget()
+    self._clock_alive = false
     local ok, AppState = pcall(require, "appstate")
     if ok then AppState.open = false end
 end

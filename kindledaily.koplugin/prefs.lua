@@ -19,6 +19,8 @@ local DEFAULTS = {
     weather_cache = nil,    -- { fetched_at, payload } set by weather_service
     autostart = true,       -- show the dashboard once at launch
     autoreturn = true,      -- bring it back when a book is closed
+    news_feed = "",         -- RSS/Atom URL; empty uses the service default
+    news_cache = nil,       -- { fetched_at, items } set by news_service
 }
 
 local DEFAULT_MODULES = {

@@ -2,10 +2,12 @@
 To-do model. A to-do is:
   { id, text, done, bucket = "today"|"later", created, done_at }
 
-Storage is a flat list; sectioning (Today / Later / Done) is derived.
+Storage is a flat list. Done items linger (crossed out) until the 4am
+rollover, then they're purged so the next day starts clean.
 --]]
 
 local Store = require("store")
+local DateUtil = require("dateutil")
 
 local Todos = {}
 
@@ -60,18 +62,6 @@ function Todos.toggle(id)
     save(list)
 end
 
---- Move between "today" and "later".
-function Todos.setBucket(id, bucket)
-    local list = all()
-    for _, t in ipairs(list) do
-        if t.id == id then
-            t.bucket = bucket
-            break
-        end
-    end
-    save(list)
-end
-
 --- Delete a to-do.
 function Todos.remove(id)
     local list = all()
@@ -84,31 +74,37 @@ function Todos.remove(id)
     save(out)
 end
 
---- Clear all completed to-dos.
-function Todos.clearDone()
+--- Remove done to-dos completed before the most recent 4am boundary.
+function Todos.purgeOldDone()
+    local cutoff = DateUtil.dayStart4am()
     local list = all()
-    local out = {}
+    local out, changed = {}, false
     for _, t in ipairs(list) do
-        if not t.done then
+        if t.done and (t.done_at or 0) < cutoff then
+            changed = true
+        else
             table.insert(out, t)
         end
     end
-    save(out)
+    if changed then
+        save(out)
+    end
 end
 
---- { today = {...}, later = {...}, done = {...} } preserving insertion order.
-function Todos.grouped()
-    local g = { today = {}, later = {}, done = {} }
+--- Active items, then today's done items (purges stale done first).
+--- @treturn table active  not-done to-dos, in insertion order
+--- @treturn table done    done-today to-dos, in insertion order
+function Todos.today()
+    Todos.purgeOldDone()
+    local active, done = {}, {}
     for _, t in ipairs(all()) do
         if t.done then
-            table.insert(g.done, t)
-        elseif t.bucket == "later" then
-            table.insert(g.later, t)
+            table.insert(done, t)
         else
-            table.insert(g.today, t)
+            table.insert(active, t)
         end
     end
-    return g
+    return active, done
 end
 
 --- Count of not-done items.

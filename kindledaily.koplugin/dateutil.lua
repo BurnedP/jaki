@@ -49,4 +49,18 @@ function DateUtil.lastNDays(n)
     return days
 end
 
+--- Timestamp of the most recent 4am boundary — the app's "day" rollover,
+--- so finished to-dos linger through the evening and clear overnight.
+function DateUtil.dayStart4am(t)
+    t = t or os.time()
+    local y = tonumber(os.date("%Y", t))
+    local mo = tonumber(os.date("%m", t))
+    local d = tonumber(os.date("%d", t))
+    local fouram = os.time{ year = y, month = mo, day = d, hour = 4, min = 0, sec = 0 }
+    if t >= fouram then
+        return fouram
+    end
+    return fouram - DAY
+end
+
 return DateUtil

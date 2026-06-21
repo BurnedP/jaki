@@ -72,7 +72,7 @@ function SettingsScreen.render(app)
     table.insert(col, H.sectionHeader("Home Modules"))
     table.insert(col, H.hline(w))
     local mods = { { "weather", "Weather" }, { "todos", "To-Dos" },
-                   { "habits", "Habits" }, { "news", "News" } }
+                   { "habits", "Habits" } }
     for _, m in ipairs(mods) do
         local key, label = m[1], m[2]
         table.insert(col, toggleRow(app, w, label,
@@ -107,6 +107,14 @@ function SettingsScreen.render(app)
                 p.weather_cache = nil  -- force a refetch in the new unit
             end)
             app:rerender()
+        end))
+    table.insert(col, H.hline(w))
+
+    table.insert(col, toggleRow(app, w, "News feed",
+        (prefs.news_feed ~= "" and "Custom" or "Default"),
+        function()
+            promptText(app, _("News feed URL (RSS/Atom)"), prefs.news_feed,
+                function(t) Prefs.update(function(p) p.news_feed = t end) end)
         end))
     table.insert(col, H.hline(w))
 
