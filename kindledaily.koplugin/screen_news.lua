@@ -94,10 +94,7 @@ function NewsScreen.render(app)
         local it = item
         local tagText = (item.tag and item.tag ~= "") and item.tag:upper() or "NEWS"
         local rowG = HorizontalGroup:new{ align = "top" }
-        table.insert(rowG, LeftContainer:new{
-            dimen = Geom:new{ w = tagW, h = H.s(28) },
-            H.textCapped(tagText, H.SIZE.meta, tagW, false, Blitbuffer.COLOR_GRAY),
-        })
+        table.insert(rowG, H.wrap(tagText, tagW, 2, H.SIZE.meta, false, Blitbuffer.COLOR_GRAY))
         table.insert(rowG, H.hspan(gap))
         table.insert(rowG, H.wrap(item.title, textW, 3, H.SIZE.body))
         table.insert(col, H.vspan(H.s(12)))
