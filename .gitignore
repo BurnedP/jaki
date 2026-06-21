@@ -1,0 +1,11 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Python (if any tooling lands here)
+__pycache__/
+*.pyc
+.venv/

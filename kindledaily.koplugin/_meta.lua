@@ -1,0 +1,10 @@
+local _ = require("gettext")
+return {
+    name = "kindledaily",
+    fullname = _("Kindle Daily"),
+    description = _([[
+A local-first daily dashboard for your Kindle:
+to-dos, habit tracking, and weather on one glanceable home screen.
+Works fully offline; weather syncs when connected.
+    ]]),
+}
