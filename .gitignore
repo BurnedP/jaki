@@ -4,6 +4,7 @@
 *~
 .idea/
 .vscode/
+docs/
 
 # Python (if any tooling lands here)
 __pycache__/
