@@ -321,4 +321,13 @@ function App:onCloseWidget()
     if ok then AppState.open = false end
 end
 
+--- Step aside when KOReader is exiting or restarting: close the dashboard
+--- so it never blocks a clean quit. We don't return true, so the broadcast
+--- still reaches the app that performs the actual exit.
+function App:onExit()
+    self._clock_alive = false
+    UIManager:close(self)
+end
+App.onRestart = App.onExit
+
 return App
