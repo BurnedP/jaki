@@ -1,18 +1,19 @@
-# Kindle Daily
+# JAKI
 
-A local-first daily dashboard for a jailbroken Kindle, built as a KOReader plugin. To-dos, habit tracking, and weather on one glanceable home screen — plus a Continue Reading strip so it can stand in as the device's everyday home.
+A local-first daily dashboard for a jailbroken Kindle, built as a KOReader plugin. To-dos, habit tracking, and weather on one glanceable home screen, as well as a resume reading feature so it can stand in as you device's everyday home.
 
 Built and tested on a **Kindle Paperwhite 12th gen (2024)** running KOReader v2026.03.
 
 ## What it does
 
-- **Home** — date + greeting, a full weather section (icon, big temp, condition, H/L, hourly), To-Dos and Habits side by side, and recent books to jump back into.
-- **To-Dos** — Today / Later / Done, tap to toggle, hold to delete.
-- **Habits** — streaks and a 7-day grid, tap to mark today.
-- **Weather** — current + hourly + daily, via [Open-Meteo](https://open-meteo.com) (no API key).
-- **Settings** — toggle home modules, set location/name/units.
+- **Home** - date + greeting, a full weather section (icon, big temp, condition, H/L, hourly), To-Dos and Habits side by side, and recent books to jump back into.
+- **To-Dos** - Today / Later / Done, tap to toggle, hold to delete.
+- **Habits** - streaks and a 7-day grid, tap to mark today.
+- **Weather** - current + hourly + daily, via [Open-Meteo](https://open-meteo.com) (no API key).
+- **Settings** - toggle home modules, set location/name/units.
+- **News** - rss news feed to keep up with the latest news.
 
-Everything except weather works fully offline; weather caches its last result.
+Everything except weather and news works fully offline; weather caches its last result, as does news.
 
 ## Layout
 
