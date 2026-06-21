@@ -1,4 +1,4 @@
-# JAKI
+# JAKI - Just A Kindle Interface
 
 A local-first daily dashboard for a jailbroken Kindle, built as a KOReader plugin. To-dos, habit tracking, and weather on one glanceable home screen, as well as a resume reading feature so it can stand in as you device's everyday home.
 
