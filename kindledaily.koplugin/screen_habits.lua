@@ -61,7 +61,7 @@ end
 local function row(app, habit, w)
     local done = Habits.doneToday(habit)
     local left = VerticalGroup:new{ align = "left" }
-    table.insert(left, H.strikeText(habit.name, H.SIZE.body, math.floor(w * 0.42), true,
+    table.insert(left, H.strikeText(habit.name, H.SIZE.body, math.floor(w * 0.42), false,
         done, done and Blitbuffer.COLOR_DARK_GRAY or nil))
     local streak = Habits.streak(habit)
     table.insert(left, H.text(streak .. " day streak", H.SIZE.meta, false, Blitbuffer.COLOR_DARK_GRAY))

@@ -188,7 +188,7 @@ local function habitColumn(app, colW)
         local habit = habits[i]
         local done = Habits.doneToday(habit)
         local nameBlock = VerticalGroup:new{ align = "left" }
-        table.insert(nameBlock, H.strikeText(habit.name, H.SIZE.body, colW, true, done,
+        table.insert(nameBlock, H.strikeText(habit.name, H.SIZE.body, colW, false, done,
             done and GRAY or nil))
         table.insert(nameBlock, H.text(Habits.streak(habit) .. "d streak",
             H.SIZE.meta, false, GRAY))
