@@ -2,12 +2,12 @@
 Home screen — the glanceable hero.
 
   • Date + greeting
-  • Full weather section (icon, big temp, condition, H/L, hourly strip)
+  • Weather section: icon, big temp, condition, H/L on the left, and the
+    last-read book to the right (tap it to open). Hourly strip below.
   • To-Dos and Habits side by side in two columns (when both enabled)
-  • Continue-reading strip pulled from KOReader's history
 
-Honors the home-module toggles in prefs. Items are capped so the screen
-stays glanceable rather than scrolling.
+Honors the home-module toggles in prefs. The app shell makes the body
+scrollable, so columns can grow past the screen.
 --]]
 
 local VerticalGroup = require("ui/widget/verticalgroup")
@@ -15,7 +15,6 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local RightContainer = require("ui/widget/container/rightcontainer")
 local CenterContainer = require("ui/widget/container/centercontainer")
-local OverlapGroup = require("ui/widget/overlapgroup")
 local Geom = require("ui/geometry")
 local Blitbuffer = require("ffi/blitbuffer")
 
@@ -29,7 +28,6 @@ local WeatherIcons = require("weather_icons")
 local Home = {}
 
 local MAX_ITEMS = 5
-local MAX_BOOKS = 3
 local GRAY = Blitbuffer.COLOR_DARK_GRAY
 
 local function hourLabel(iso)
@@ -38,6 +36,43 @@ local function hourLabel(iso)
     local h12 = hh % 12
     if h12 == 0 then h12 = 12 end
     return h12 .. " " .. ampm
+end
+
+-- ── Last-read book ───────────────────────────────────────────────────
+
+--- Cheap cover lookup: a cached cover blitbuffer or nil (never extracts).
+local function coverFor(path)
+    local ok, BIM = pcall(require, "bookinfomanager")
+    if not ok or not BIM then return nil end
+    local got, info = pcall(function() return BIM:getBookInfo(path, true) end)
+    if got and info and info.cover_bb then return info.cover_bb end
+    return nil
+end
+
+--- Tappable widget for the most recently read book, or nil if none.
+local function lastBook(app, maxW)
+    local ok, ReadHistory = pcall(require, "readhistory")
+    if not ok or not ReadHistory or not ReadHistory.hist then return nil end
+    local e
+    for _, h in ipairs(ReadHistory.hist) do
+        if h.file and h.text and not h.dim then e = h break end
+    end
+    if not e then return nil end
+
+    local Assets = require("assets")
+    local cluster = HorizontalGroup:new{ align = "center" }
+    local cover = coverFor(e.file)
+    local art = cover and H.image(cover, H.s(60), H.s(84))
+        or H.icon(Assets.icon("book.svg"), H.s(44))
+    if art then
+        table.insert(cluster, art)
+        table.insert(cluster, H.hspan(H.s(12)))
+    end
+    local title = (e.text or "Book"):gsub("%.%w+$", "")
+    table.insert(cluster, H.wrap(title, maxW - H.s(76), 3, H.SIZE.meta))
+
+    local path = e.file
+    return H.tap(cluster, function() app:openBook(path) end)
 end
 
 -- ── Weather ──────────────────────────────────────────────────────────
@@ -54,35 +89,41 @@ local function weatherSection(app, w, prefs)
             w, H.s(56), function() app:go("weather") end)
     end
 
-    local block = VerticalGroup:new{ align = "left" }
+    local rowH = H.s(100)
+    local book = lastBook(app, math.floor(w * 0.42))
+    local leftW = book and math.floor(w * 0.56) or w
+    local rightW = w - leftW
 
-    -- Top: icon + big temp + condition (left), H/L (right)
+    -- Weather cluster (left): icon + temp + condition + H/L
     local leftHG = HorizontalGroup:new{ align = "center" }
-    local ic = WeatherIcons.widget(p.code, H.s(82))
+    local ic = WeatherIcons.widget(p.code, H.s(80))
     if ic then
         table.insert(leftHG, ic)
-        table.insert(leftHG, H.hspan(H.s(16)))
+        table.insert(leftHG, H.hspan(H.s(14)))
     end
     local tempCol = VerticalGroup:new{ align = "left" }
-    table.insert(tempCol, H.text(p.temp .. "°", H.SIZE.hero + 28, true))
+    table.insert(tempCol, H.text(p.temp .. "°", H.SIZE.hero + 24, true))
     table.insert(tempCol, H.text(p.condition or "", H.SIZE.body, false, GRAY))
+    if p.high and p.low then
+        table.insert(tempCol, H.text("H " .. p.high .. "°   L " .. p.low .. "°",
+            H.SIZE.meta, false, GRAY))
+    end
     table.insert(leftHG, tempCol)
 
-    local hl = VerticalGroup:new{ align = "right" }
-    if p.high and p.low then
-        table.insert(hl, H.text("H " .. p.high .. "°", H.SIZE.body, true))
-        table.insert(hl, H.text("L " .. p.low .. "°", H.SIZE.body, false, GRAY))
+    local topRow = HorizontalGroup:new{ align = "center" }
+    table.insert(topRow, H.tap(
+        LeftContainer:new{ dimen = Geom:new{ w = leftW, h = rowH }, leftHG },
+        function() app:go("weather") end))
+    if book then
+        table.insert(topRow, RightContainer:new{
+            dimen = Geom:new{ w = rightW, h = rowH }, book })
     end
 
-    table.insert(block, OverlapGroup:new{
-        dimen = Geom:new{ w = w, h = H.s(98) },
-        LeftContainer:new{ dimen = Geom:new{ w = w, h = H.s(98) }, leftHG },
-        RightContainer:new{ dimen = Geom:new{ w = w, h = H.s(98) }, hl },
-    })
+    local block = VerticalGroup:new{ align = "left" }
+    table.insert(block, topRow)
 
     -- Hourly strip
     if p.hourly and #p.hourly > 0 then
-        table.insert(block, H.vspan(H.s(8)))
         local n = math.min(#p.hourly, 6)
         local cw = math.floor(w / n)
         local strip = HorizontalGroup:new{ align = "top" }
@@ -100,10 +141,11 @@ local function weatherSection(app, w, prefs)
             table.insert(strip, CenterContainer:new{
                 dimen = Geom:new{ w = cw, h = H.s(100) }, cell })
         end
-        table.insert(block, strip)
+        table.insert(block, H.vspan(H.s(8)))
+        table.insert(block, H.tap(strip, function() app:go("weather") end))
     end
 
-    return H.tap(block, function() app:go("weather") end)
+    return block
 end
 
 -- ── Columns ──────────────────────────────────────────────────────────
@@ -144,17 +186,16 @@ local function habitColumn(app, colW)
     end
     for i = 1, math.min(MAX_ITEMS, #habits) do
         local habit = habits[i]
+        local done = Habits.doneToday(habit)
         local nameBlock = VerticalGroup:new{ align = "left" }
-        table.insert(nameBlock, H.wrap(habit.name, colW - H.s(56), 1, H.SIZE.body, true))
-        table.insert(nameBlock, H.text(Habits.streak(habit) .. "d streak", H.SIZE.meta, false, GRAY))
-        local row = OverlapGroup:new{
-            dimen = Geom:new{ w = colW, h = H.s(58) },
-            LeftContainer:new{ dimen = Geom:new{ w = colW, h = H.s(58) }, nameBlock },
-            RightContainer:new{ dimen = Geom:new{ w = colW, h = H.s(58) },
-                H.box(H.s(36), Habits.doneToday(habit)) },
-        }
+        table.insert(nameBlock, H.strikeText(habit.name, H.SIZE.body, colW, true, done,
+            done and GRAY or nil))
+        table.insert(nameBlock, H.text(Habits.streak(habit) .. "d streak",
+            H.SIZE.meta, false, GRAY))
         table.insert(col, H.vspan(H.s(12)))
-        table.insert(col, H.tap(row, function() Habits.toggleToday(habit.id); app:rerender() end))
+        table.insert(col, H.tap(
+            LeftContainer:new{ dimen = Geom:new{ w = colW, h = H.s(56) }, nameBlock },
+            function() Habits.toggleToday(habit.id); app:rerender() end))
     end
     return col
 end
@@ -175,65 +216,6 @@ local function columns(app, w, prefs)
         return habitColumn(app, w)
     end
     return nil
-end
-
--- ── Continue reading ─────────────────────────────────────────────────
-
---- Cheap cover lookup: returns a cached cover blitbuffer or nil. Never
---- extracts (which opens the document and would block the UI at render).
-local function coverFor(path)
-    local ok, BIM = pcall(require, "bookinfomanager")
-    if not ok or not BIM then return nil end
-    local got, info = pcall(function() return BIM:getBookInfo(path, true) end)
-    if got and info and info.cover_bb then return info.cover_bb end
-    return nil
-end
-
-local function continueReading(app, w)
-    local ok, ReadHistory = pcall(require, "readhistory")
-    if not ok or not ReadHistory or not ReadHistory.hist then return nil end
-
-    local books = {}
-    for _, e in ipairs(ReadHistory.hist) do
-        if e.file and e.text and not e.dim then
-            table.insert(books, e)
-            if #books >= MAX_BOOKS then break end
-        end
-    end
-    if #books == 0 then return nil end
-
-    local col = VerticalGroup:new{ align = "left" }
-    table.insert(col, H.sectionHeader("Continue Reading"))
-    table.insert(col, H.vspan(H.s(8)))
-    table.insert(col, H.hline(w))
-    table.insert(col, H.vspan(H.s(10)))
-
-    local Assets = require("assets")
-    local gutter = H.s(20)
-    local cw = math.floor((w - gutter * (#books - 1)) / #books)
-    local strip = HorizontalGroup:new{ align = "top" }
-    for i, e in ipairs(books) do
-        local cell = VerticalGroup:new{ align = "center" }
-        -- Real cover if cached (cheap); otherwise a clean book glyph.
-        local cover = coverFor(e.file)
-        local art = cover and H.image(cover, H.s(80), H.s(108))
-            or H.icon(Assets.icon("book.svg"), H.s(46))
-        if art then
-            table.insert(cell, art)
-            table.insert(cell, H.vspan(H.s(8)))
-        end
-        local title = (e.text or "Book"):gsub("%.%w+$", "")
-        table.insert(cell, H.wrap(title, cw - H.s(8), 2, H.SIZE.meta))
-        local path = e.file
-        table.insert(strip, H.tap(
-            CenterContainer:new{ dimen = Geom:new{ w = cw, h = H.s(160) }, cell },
-            function() app:openBook(path) end))
-        if i < #books then
-            table.insert(strip, H.hspan(gutter))
-        end
-    end
-    table.insert(col, strip)
-    return col
 end
 
 -- ── Compose ──────────────────────────────────────────────────────────
@@ -261,12 +243,6 @@ function Home.render(app)
     if cols then
         table.insert(col, H.vspan(H.s(22)))
         table.insert(col, cols)
-    end
-
-    local cr = continueReading(app, w)
-    if cr then
-        table.insert(col, H.vspan(H.s(22)))
-        table.insert(col, cr)
     end
 
     return col

@@ -59,8 +59,10 @@ local function confirmDelete(app, habit)
 end
 
 local function row(app, habit, w)
+    local done = Habits.doneToday(habit)
     local left = VerticalGroup:new{ align = "left" }
-    table.insert(left, H.textCapped(habit.name, H.SIZE.body, w * 0.42, true))
+    table.insert(left, H.strikeText(habit.name, H.SIZE.body, math.floor(w * 0.42), true,
+        done, done and Blitbuffer.COLOR_DARK_GRAY or nil))
     local streak = Habits.streak(habit)
     table.insert(left, H.text(streak .. " day streak", H.SIZE.meta, false, Blitbuffer.COLOR_DARK_GRAY))
     local left_box = LeftContainer:new{
@@ -94,8 +96,6 @@ local function row(app, habit, w)
     local hg = HorizontalGroup:new{ align = "center" }
     table.insert(hg, left_box)
     table.insert(hg, grid_col)
-    table.insert(hg, H.hspan(H.s(20)))
-    table.insert(hg, H.box(H.s(44), Habits.doneToday(habit)))
 
     return H.tappable(hg, w, H.s(86),
         function() Habits.toggleToday(habit.id); app:rerender() end,

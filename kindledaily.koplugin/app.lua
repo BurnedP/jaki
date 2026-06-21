@@ -14,6 +14,7 @@ local HorizontalGroup = require("ui/widget/horizontalgroup")
 local LeftContainer = require("ui/widget/container/leftcontainer")
 local RightContainer = require("ui/widget/container/rightcontainer")
 local TopContainer = require("ui/widget/container/topcontainer")
+local ScrollableContainer = require("ui/widget/container/scrollablecontainer")
 local OverlapGroup = require("ui/widget/overlapgroup")
 local Button = require("ui/widget/button")
 local InfoMessage = require("ui/widget/infomessage")
@@ -45,7 +46,8 @@ function App:init()
     self.screen_w = Screen:getWidth()
     self.screen_h = Screen:getHeight()
     self.pad = H.s(16)
-    self.content_w = self.screen_w - 2 * self.pad
+    self.scrollbar_w = H.s(6)  -- matches ScrollableContainer.scroll_bar_width
+    self.content_w = self.screen_w - 2 * self.pad - 3 * self.scrollbar_w
     self.bar_h = H.s(50)
     self.nav_h = H.s(60)
 
@@ -177,10 +179,29 @@ function App:_body()
     table.insert(padded, H.hspan(self.pad))
     table.insert(padded, body)
 
-    return TopContainer:new{
+    -- Preserve scroll position across rebuilds within the same screen
+    -- (toggling an item rebuilds the tree); reset when switching tabs.
+    local prev_offset
+    if self._scrollable and self._scroll_screen == self.screen then
+        prev_offset = self._scrollable:getScrolledOffset()
+    end
+    if self._scrollable and self._scrollable.reset then
+        pcall(function() self._scrollable:reset() end)
+    end
+
+    local scrollable = ScrollableContainer:new{
         dimen = Geom:new{ w = self.screen_w, h = body_h },
+        show_parent = self,
         padded,
     }
+    if prev_offset then
+        scrollable:setScrolledOffset(prev_offset)
+    end
+    self._scrollable = scrollable
+    self._scroll_screen = self.screen
+    self.cropping_widget = scrollable
+
+    return scrollable
 end
 
 function App:_assemble()

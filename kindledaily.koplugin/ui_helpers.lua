@@ -15,6 +15,8 @@ local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local HorizontalSpan = require("ui/widget/horizontalspan")
 local LeftContainer = require("ui/widget/container/leftcontainer")
+local CenterContainer = require("ui/widget/container/centercontainer")
+local OverlapGroup = require("ui/widget/overlapgroup")
 local LineWidget = require("ui/widget/linewidget")
 local TextWidget = require("ui/widget/textwidget")
 local TextBoxWidget = require("ui/widget/textboxwidget")
@@ -148,6 +150,33 @@ function H.image(bb, w, h)
         width = w,
         height = h,
         scale_factor = 0,  -- fit proportionally
+    }
+end
+
+--- Single-line text capped to max_width; struck-through when `struck`.
+function H.strikeText(str, size, max_width, bold, struck, color)
+    local sz = size or H.SIZE.body
+    local tw = TextWidget:new{
+        text = str or "",
+        face = H.face(sz, bold),
+        max_width = max_width,
+        fgcolor = color or Blitbuffer.COLOR_BLACK,
+    }
+    if not struck then
+        return tw
+    end
+    local g = tw:getSize()
+    local line = CenterContainer:new{
+        dimen = Geom:new{ w = g.w, h = g.h },
+        LineWidget:new{
+            dimen = Geom:new{ w = g.w, h = H.s(3) },
+            background = color or Blitbuffer.COLOR_BLACK,
+        },
+    }
+    return OverlapGroup:new{
+        dimen = Geom:new{ w = g.w, h = g.h },
+        tw,
+        line,
     }
 end
 
