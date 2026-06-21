@@ -44,8 +44,18 @@ H.SIZE = {
     nav = 15,
 }
 
---- Font face. bold=true uses the title face, else the content face.
+H._serif = false
+
+--- Switch the UI font family. true = serif (Noto Serif), false = sans.
+function H.setSerif(b)
+    H._serif = b and true or false
+end
+
+--- Font face honoring the serif/sans choice. bold=true uses the bold cut.
 function H.face(size, bold)
+    if H._serif then
+        return Font:getFace(bold and "NotoSerif-Bold.ttf" or "NotoSerif-Regular.ttf", size)
+    end
     return Font:getFace(bold and "tfont" or "cfont", size)
 end
 

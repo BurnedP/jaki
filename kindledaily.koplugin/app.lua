@@ -224,6 +224,8 @@ function App:_body()
 end
 
 function App:_assemble()
+    local pok, Prefs = pcall(require, "prefs")
+    if pok then H.setSerif(Prefs.get().font == "serif") end
     local main = VerticalGroup:new{ align = "left" }
     table.insert(main, self:_statusBar())
     table.insert(main, H.hline(self.screen_w))

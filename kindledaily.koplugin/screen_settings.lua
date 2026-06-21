@@ -110,6 +110,13 @@ function SettingsScreen.render(app)
         end))
     table.insert(col, H.hline(w))
 
+    table.insert(col, toggleRow(app, w, "Font",
+        prefs.font == "serif" and "Serif" or "Sans",
+        function()
+            Prefs.update(function(p) p.font = (p.font == "serif") and "sans" or "serif" end)
+            app:rerender()
+        end))
+    table.insert(col, H.hline(w))
     table.insert(col, toggleRow(app, w, "News feed",
         (prefs.news_feed ~= "" and "Custom" or "Default"),
         function()

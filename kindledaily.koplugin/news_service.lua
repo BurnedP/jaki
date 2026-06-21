@@ -63,6 +63,7 @@ function NewsService.refresh()
                 title = stripTags(title),
                 link = block:match("<link.->(.-)</link>"),
                 desc = stripTags(block:match("<description.->(.-)</description>")),
+                tag = stripTags(block:match("<category.->(.-)</category>")),
             })
         end
         if #items >= MAX_ITEMS then break end
@@ -78,6 +79,7 @@ function NewsService.refresh()
                     link = block:match('<link.-href="(.-)"'),
                     desc = stripTags(block:match("<summary.->(.-)</summary>")
                         or block:match("<content.->(.-)</content>")),
+                    tag = block:match('<category[^>]-term="(.-)"'),
                 })
             end
             if #items >= MAX_ITEMS then break end

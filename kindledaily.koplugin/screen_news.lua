@@ -6,6 +6,8 @@ the last headlines show offline.
 
 local VerticalGroup = require("ui/widget/verticalgroup")
 local HorizontalGroup = require("ui/widget/horizontalgroup")
+local LeftContainer = require("ui/widget/container/leftcontainer")
+local Geom = require("ui/geometry")
 local Button = require("ui/widget/button")
 local TextViewer = require("ui/widget/textviewer")
 local InfoMessage = require("ui/widget/infomessage")
@@ -85,11 +87,21 @@ function NewsScreen.render(app)
     end
     table.insert(col, H.vspan(H.s(8)))
     table.insert(col, H.hline(w))
+    local tagW = H.s(96)
+    local gap = H.s(14)
+    local textW = w - tagW - gap
     for _, item in ipairs(cache.items) do
         local it = item
+        local tagText = (item.tag and item.tag ~= "") and item.tag:upper() or "NEWS"
+        local rowG = HorizontalGroup:new{ align = "top" }
+        table.insert(rowG, LeftContainer:new{
+            dimen = Geom:new{ w = tagW, h = H.s(28) },
+            H.textCapped(tagText, H.SIZE.meta, tagW, false, Blitbuffer.COLOR_GRAY),
+        })
+        table.insert(rowG, H.hspan(gap))
+        table.insert(rowG, H.wrap(item.title, textW, 3, H.SIZE.body))
         table.insert(col, H.vspan(H.s(12)))
-        table.insert(col, H.tap(H.wrap(item.title, w, 3, H.SIZE.body),
-            function() showArticle(it) end))
+        table.insert(col, H.tap(rowG, function() showArticle(it) end))
         table.insert(col, H.vspan(H.s(12)))
         table.insert(col, H.hline(w))
     end
