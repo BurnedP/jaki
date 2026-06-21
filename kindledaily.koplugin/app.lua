@@ -87,37 +87,36 @@ function App:_batteryString()
 end
 
 function App:_statusBar()
-    local left = LeftContainer:new{
-        dimen = Geom:new{ w = self.content_w, h = self.bar_h },
-        H.text(self:_timeString(), H.SIZE.meta, true),
-    }
+    local right_w = H.s(170)
+    local left_w = self.content_w - right_w
 
+    -- Left: time. Tap anywhere here to pop KOReader's own menu.
+    local left = H.tap(
+        LeftContainer:new{
+            dimen = Geom:new{ w = left_w, h = self.bar_h },
+            H.text(self:_timeString(), H.SIZE.meta, true),
+        },
+        function() self:showKOMenu() end)
+
+    -- Right: battery + a library icon that drops into the file manager.
     local right_group = HorizontalGroup:new{ align = "center" }
     local batt = self:_batteryString()
     if batt ~= "" then
         table.insert(right_group, H.text(batt, H.SIZE.meta, false, Blitbuffer.COLOR_DARK_GRAY))
-        table.insert(right_group, H.hspan(H.s(14)))
+        table.insert(right_group, H.hspan(H.s(16)))
     end
-    table.insert(right_group, Button:new{
-        text = _("Exit"),
-        text_font_size = 14,
-        bordersize = H.s(1),
-        radius = H.s(4),
-        padding = H.s(5),
-        margin = 0,
-        callback = function() self:onClose() end,
-        show_parent = self,
-    })
+    local lib = H.icon(require("assets").icon("library.svg"), H.s(34))
+    if lib then
+        table.insert(right_group, H.tap(lib, function() self:openFileManager() end))
+    end
     local right = RightContainer:new{
-        dimen = Geom:new{ w = self.content_w, h = self.bar_h },
+        dimen = Geom:new{ w = right_w, h = self.bar_h },
         right_group,
     }
 
-    local overlap = OverlapGroup:new{
-        dimen = Geom:new{ w = self.content_w, h = self.bar_h },
-        left,
-        right,
-    }
+    local bar = HorizontalGroup:new{ align = "center" }
+    table.insert(bar, left)
+    table.insert(bar, right)
 
     return FrameContainer:new{
         bordersize = 0,
@@ -126,7 +125,7 @@ function App:_statusBar()
         padding_right = self.pad,
         margin = 0,
         background = Blitbuffer.COLOR_WHITE,
-        overlap,
+        bar,
     }
 end
 
@@ -250,6 +249,33 @@ function App:openBook(path)
             timeout = 4,
         })
     end
+end
+
+--- Pop KOReader's own file-manager menu (wifi, settings, etc.) over the app.
+function App:showKOMenu()
+    local FM = package.loaded["apps/filemanager/filemanager"]
+    if FM and FM.instance and FM.instance.menu and FM.instance.menu.onShowMenu then
+        FM.instance.menu:onShowMenu()
+    end
+    return true
+end
+
+--- Close the dashboard, revealing (or opening) the file manager / library.
+function App:openFileManager()
+    UIManager:close(self)
+    local FM = package.loaded["apps/filemanager/filemanager"]
+    if not (FM and FM.instance) then
+        pcall(function()
+            require("apps/filemanager/filemanager"):showFiles()
+        end)
+    end
+    return true
+end
+
+--- Clear the shared "open" flag whenever the app is dismissed (any path).
+function App:onCloseWidget()
+    local ok, AppState = pcall(require, "appstate")
+    if ok then AppState.open = false end
 end
 
 return App

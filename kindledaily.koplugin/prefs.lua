@@ -17,6 +17,8 @@ local DEFAULTS = {
     font = "serif",         -- "serif" | "sans"
     weather_api_key = "",
     weather_cache = nil,    -- { fetched_at, payload } set by weather_service
+    autostart = true,       -- show the dashboard once at launch
+    autoreturn = true,      -- bring it back when a book is closed
 }
 
 local DEFAULT_MODULES = {

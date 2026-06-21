@@ -125,10 +125,8 @@ local function todoColumn(app, colW)
         table.insert(row, H.box(H.s(24), todo.done))
         table.insert(row, H.hspan(H.s(12)))
         table.insert(row, H.wrap(todo.text, colW - H.s(42), 2, H.SIZE.body))
-        table.insert(col, H.vspan(H.s(8)))
+        table.insert(col, H.vspan(H.s(12)))
         table.insert(col, H.tap(row, function() Todos.toggle(todo.id); app:rerender() end))
-        table.insert(col, H.vspan(H.s(8)))
-        table.insert(col, H.hline(colW))
     end
     return col
 end
@@ -147,18 +145,16 @@ local function habitColumn(app, colW)
     for i = 1, math.min(MAX_ITEMS, #habits) do
         local habit = habits[i]
         local nameBlock = VerticalGroup:new{ align = "left" }
-        table.insert(nameBlock, H.wrap(habit.name, colW - H.s(60), 2, H.SIZE.body, true))
+        table.insert(nameBlock, H.wrap(habit.name, colW - H.s(56), 1, H.SIZE.body, true))
         table.insert(nameBlock, H.text(Habits.streak(habit) .. "d streak", H.SIZE.meta, false, GRAY))
         local row = OverlapGroup:new{
-            dimen = Geom:new{ w = colW, h = H.s(78) },
-            LeftContainer:new{ dimen = Geom:new{ w = colW, h = H.s(78) }, nameBlock },
-            RightContainer:new{ dimen = Geom:new{ w = colW, h = H.s(78) },
-                H.box(H.s(40), Habits.doneToday(habit)) },
+            dimen = Geom:new{ w = colW, h = H.s(58) },
+            LeftContainer:new{ dimen = Geom:new{ w = colW, h = H.s(58) }, nameBlock },
+            RightContainer:new{ dimen = Geom:new{ w = colW, h = H.s(58) },
+                H.box(H.s(36), Habits.doneToday(habit)) },
         }
-        table.insert(col, H.vspan(H.s(8)))
+        table.insert(col, H.vspan(H.s(12)))
         table.insert(col, H.tap(row, function() Habits.toggleToday(habit.id); app:rerender() end))
-        table.insert(col, H.vspan(H.s(6)))
-        table.insert(col, H.hline(colW))
     end
     return col
 end

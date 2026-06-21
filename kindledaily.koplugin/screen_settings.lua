@@ -110,11 +110,30 @@ function SettingsScreen.render(app)
         end))
     table.insert(col, H.hline(w))
 
-    -- Exit
+    -- Behavior
+    table.insert(col, H.vspan(H.s(20)))
+    table.insert(col, H.sectionHeader("Behavior"))
+    table.insert(col, H.hline(w))
+    table.insert(col, toggleRow(app, w, "Start on launch",
+        prefs.autostart and "On" or "Off",
+        function()
+            Prefs.update(function(p) p.autostart = not p.autostart end)
+            app:rerender()
+        end))
+    table.insert(col, H.hline(w))
+    table.insert(col, toggleRow(app, w, "Return after closing a book",
+        prefs.autoreturn and "On" or "Off",
+        function()
+            Prefs.update(function(p) p.autoreturn = not p.autoreturn end)
+            app:rerender()
+        end))
+    table.insert(col, H.hline(w))
+
+    -- Exit to the file manager / library
     table.insert(col, H.vspan(H.s(28)))
     table.insert(col, H.tappable(
-        H.text("Exit Kindle Daily", H.SIZE.body, true),
-        w, H.s(56), function() app:onClose() end))
+        H.text("Exit to file manager", H.SIZE.body, true),
+        w, H.s(56), function() app:openFileManager() end))
 
     return col
 end
