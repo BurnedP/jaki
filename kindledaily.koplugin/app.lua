@@ -70,6 +70,7 @@ function App:init()
 
     self._clock_alive = true
     self:_scheduleClock()
+    self:_maybeAutoRefresh()
 end
 
 --- Public: rebuild the whole tree and refresh the screen.
@@ -80,13 +81,54 @@ function App:rerender()
     end
 end
 
---- Refresh once per minute so the status-bar clock stays current.
+--- Refresh once per minute so the clock stays current, and top up
+--- weather/news when they've gone stale.
 function App:_scheduleClock()
     local secs = 60 - (os.time() % 60)
     UIManager:scheduleIn(secs, function()
         if not self._clock_alive then return end
+        self:_maybeAutoRefresh()
         self:rerender()
         self:_scheduleClock()
+    end)
+end
+
+--- Fetch weather/news in the background when older than the interval.
+--- Gates on last-attempt (not just last-success) so a failed/offline fetch
+--- won't retry every minute.
+function App:_maybeAutoRefresh()
+    local ok, Prefs = pcall(require, "prefs")
+    if not ok then return end
+    local prefs = Prefs.get()
+    local interval = prefs.refresh_interval or 3600
+    if interval <= 0 then return end
+    local now = os.time()
+    self._last_attempt = self._last_attempt or {}
+
+    local function due(key, cache)
+        local last = math.max(self._last_attempt[key] or 0,
+            (cache and cache.fetched_at) or 0)
+        return (now - last) >= interval
+    end
+
+    if prefs.modules.weather and prefs.location ~= "" and due("weather", prefs.weather_cache) then
+        self._last_attempt.weather = now
+        self:_bgRefresh("weather_service")
+    end
+    if due("news", prefs.news_cache) then
+        self._last_attempt.news = now
+        self:_bgRefresh("news_service")
+    end
+end
+
+--- Run a service's refresh() off the UI tick, then repaint if still open.
+function App:_bgRefresh(module_name)
+    UIManager:scheduleIn(0.1, function()
+        pcall(function()
+            local rok, svc = pcall(require, module_name)
+            if rok and svc and svc.refresh then svc.refresh() end
+        end)
+        if self._clock_alive then self:rerender() end
     end)
 end
 

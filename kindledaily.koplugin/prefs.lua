@@ -22,6 +22,7 @@ local DEFAULTS = {
     news_feed = "",         -- RSS/Atom URL; empty uses the service default
     news_cache = nil,       -- { fetched_at, items } set by news_service
     clock24 = false,        -- 24-hour time when true, else 12-hour + AM/PM
+    refresh_interval = 3600, -- seconds between auto weather/news refresh; 0 = off
 }
 
 local DEFAULT_MODULES = {

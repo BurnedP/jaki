@@ -19,6 +19,13 @@ local Prefs = require("prefs")
 
 local SettingsScreen = {}
 
+local function intervalLabel(s)
+    if not s or s <= 0 then return "Off" end
+    if s == 1800 then return "30 min" end
+    if s == 3600 then return "1 hour" end
+    return math.floor(s / 60) .. " min"
+end
+
 local function toggleRow(app, w, label, value, on_tap)
     local left = LeftContainer:new{
         dimen = Geom:new{ w = w, h = H.s(56) },
@@ -147,6 +154,18 @@ function SettingsScreen.render(app)
         prefs.autoreturn and "On" or "Off",
         function()
             Prefs.update(function(p) p.autoreturn = not p.autoreturn end)
+            app:rerender()
+        end))
+    table.insert(col, H.hline(w))
+    table.insert(col, toggleRow(app, w, "Auto-refresh",
+        intervalLabel(prefs.refresh_interval),
+        function()
+            Prefs.update(function(p)
+                local cur = p.refresh_interval or 3600
+                if cur <= 0 then p.refresh_interval = 1800
+                elseif cur == 1800 then p.refresh_interval = 3600
+                else p.refresh_interval = 0 end
+            end)
             app:rerender()
         end))
     table.insert(col, H.hline(w))
