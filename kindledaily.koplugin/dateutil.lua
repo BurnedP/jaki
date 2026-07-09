@@ -85,4 +85,29 @@ function DateUtil.hourLabel(iso, use24)
     return h12 .. " " .. ampm
 end
 
+local MONTHS = { "January", "February", "March", "April", "May", "June",
+                 "July", "August", "September", "October", "November", "December" }
+function DateUtil.monthName(m) return MONTHS[m] end
+
+--- Epoch (noon) for a "YYYY-MM-DD" key. Noon dodges the DST-midnight rollover.
+function DateUtil.keyToTs(key)
+    local y, mo, d = key:match("(%d+)-(%d+)-(%d+)")
+    return os.time{ year = tonumber(y), month = tonumber(mo), day = tonumber(d), hour = 12 }
+end
+
+--- key +/- n days as a "YYYY-MM-DD" key, rebuilt from the noon anchor.
+function DateUtil.addDaysKey(key, n)
+    return os.date("%Y-%m-%d", DateUtil.keyToTs(key) + n * DAY)
+end
+
+--- Days in month, leap-correct via os.time normalization (day 0 of next month).
+function DateUtil.daysInMonth(y, m)
+    return tonumber(os.date("%d", os.time{ year = y, month = m + 1, day = 0, hour = 12 }))
+end
+
+--- Weekday of a key: 0=Sun .. 6=Sat (matches os.date("%w")).
+function DateUtil.weekdayOfKey(key)
+    return tonumber(os.date("%w", DateUtil.keyToTs(key)))
+end
+
 return DateUtil

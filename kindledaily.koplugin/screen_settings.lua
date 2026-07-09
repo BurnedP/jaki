@@ -78,8 +78,8 @@ function SettingsScreen.render(app)
     table.insert(col, H.vspan(H.s(20)))
     table.insert(col, H.sectionHeader("Home Modules"))
     table.insert(col, H.hline(w))
-    local mods = { { "weather", "Weather" }, { "todos", "To-Dos" },
-                   { "habits", "Habits" } }
+    local mods = { { "weather", "Weather" }, { "calendar", "Calendar" },
+                   { "todos", "To-Dos" }, { "habits", "Habits" } }
     for _, m in ipairs(mods) do
         local key, label = m[1], m[2]
         table.insert(col, toggleRow(app, w, label,
@@ -136,6 +136,25 @@ function SettingsScreen.render(app)
         function()
             promptText(app, _("News feed URL (RSS/Atom)"), prefs.news_feed,
                 function(t) Prefs.update(function(p) p.news_feed = t end) end)
+        end))
+    table.insert(col, H.hline(w))
+    table.insert(col, toggleRow(app, w, "Calendar URL",
+        (prefs.calendar_ics_url ~= "" and "Custom" or "Set"),
+        function()
+            promptText(app, _("Calendar ICS URL"), prefs.calendar_ics_url,
+                function(t)
+                    Prefs.update(function(p)
+                        p.calendar_ics_url = t
+                        p.calendar_cache = nil   -- drop stale cache so the new URL refetches
+                    end)
+                end)
+        end))
+    table.insert(col, H.hline(w))
+    table.insert(col, toggleRow(app, w, "Week starts",
+        (prefs.week_start == "mon" and "Monday" or "Sunday"),
+        function()
+            Prefs.update(function(p) p.week_start = (p.week_start == "mon") and "sun" or "mon" end)
+            app:rerender()
         end))
     table.insert(col, H.hline(w))
 

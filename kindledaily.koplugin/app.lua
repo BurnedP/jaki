@@ -32,6 +32,7 @@ local Screen = Device.screen
 -- All renderable screens (router). NAV controls only the bottom tab bar.
 local SCREENS = {
     home     = "screen_home",
+    calendar = "screen_calendar",
     todos    = "screen_todos",
     habits   = "screen_habits",
     weather  = "screen_weather",
@@ -43,6 +44,7 @@ local SCREENS = {
 -- column headers on Home, so they're intentionally not tabs here.
 local NAV = {
     { key = "home",     label = "Home" },
+    { key = "calendar", label = "Calendar" },
     { key = "weather",  label = "Weather" },
     { key = "news",     label = "News" },
     { key = "settings", label = "Settings" },
@@ -118,6 +120,11 @@ function App:_maybeAutoRefresh()
     if due("news", prefs.news_cache) then
         self._last_attempt.news = now
         self:_bgRefresh("news_service")
+    end
+    if prefs.calendar_ics_url and prefs.calendar_ics_url ~= ""
+        and due("calendar", prefs.calendar_cache) then
+        self._last_attempt.calendar = now
+        self:_bgRefresh("calendar_service")
     end
 end
 

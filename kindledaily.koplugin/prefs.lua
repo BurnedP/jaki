@@ -22,11 +22,15 @@ local DEFAULTS = {
     news_feed = "",         -- RSS/Atom URL; empty uses the service default
     news_cache = nil,       -- { fetched_at, items } set by news_service
     clock24 = false,        -- 24-hour time when true, else 12-hour + AM/PM
-    refresh_interval = 3600, -- seconds between auto weather/news refresh; 0 = off
+    refresh_interval = 3600, -- seconds between auto weather/news/calendar refresh; 0 = off
+    calendar_ics_url = "",   -- read-only ICS/iCal URL (Google/Apple/Outlook); empty = off
+    calendar_cache = nil,    -- { fetched_at, events } set by calendar_service.refresh()
+    week_start = "sun",      -- "sun" | "mon" first column of the month grid
 }
 
 local DEFAULT_MODULES = {
     weather = true,
+    calendar = true,
     todos = true,
     habits = true,
     news = false,

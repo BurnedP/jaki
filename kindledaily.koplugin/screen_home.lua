@@ -24,6 +24,7 @@ local Todos = require("model_todos")
 local Habits = require("model_habits")
 local Prefs = require("prefs")
 local WeatherIcons = require("weather_icons")
+local Calendar = require("model_calendar")
 
 local Home = {}
 
@@ -239,6 +240,31 @@ end
 
 -- ── Compose ──────────────────────────────────────────────────────────
 
+--- Today's calendar events (local + subscribed), tapping through to the tab.
+local function todaySection(app, w, prefs)
+    local list = Calendar.today()
+    local block = VerticalGroup:new{ align = "left" }
+    table.insert(block, colHeader(app, "Today", "calendar", w))
+    table.insert(block, H.vspan(H.s(8)))
+    table.insert(block, H.hline(w))
+    if #list == 0 then
+        table.insert(block, H.vspan(H.s(10)))
+        table.insert(block, H.text("Nothing scheduled", H.SIZE.meta, false, GRAY))
+        return block
+    end
+    for i = 1, math.min(#list, MAX_ITEMS) do
+        local ev = list[i]
+        local label = ev.title
+        if not ev.all_day and ev.start_ts then
+            label = DateUtil.formatTime(ev.start_ts, prefs.clock24) .. "  " .. ev.title
+        end
+        table.insert(block, H.vspan(H.s(12)))
+        table.insert(block, H.tap(H.wrap(label, w, 2, H.SIZE.body),
+            function() app:go("calendar") end))
+    end
+    return block
+end
+
 function Home.render(app)
     local w = app.content_w
     local prefs = Prefs.get()
@@ -256,6 +282,11 @@ function Home.render(app)
     if prefs.modules.weather then
         table.insert(col, H.vspan(H.s(18)))
         table.insert(col, weatherSection(app, w, prefs))
+    end
+
+    if prefs.modules.calendar then
+        table.insert(col, H.vspan(H.s(22)))
+        table.insert(col, todaySection(app, w, prefs))
     end
 
     local cols = columns(app, w, prefs)
