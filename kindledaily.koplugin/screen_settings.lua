@@ -117,6 +117,13 @@ function SettingsScreen.render(app)
             app:rerender()
         end))
     table.insert(col, H.hline(w))
+    table.insert(col, toggleRow(app, w, "Time format",
+        prefs.clock24 and "24-hour" or "12-hour",
+        function()
+            Prefs.update(function(p) p.clock24 = not p.clock24 end)
+            app:rerender()
+        end))
+    table.insert(col, H.hline(w))
     table.insert(col, toggleRow(app, w, "News feed",
         (prefs.news_feed ~= "" and "Custom" or "Default"),
         function()

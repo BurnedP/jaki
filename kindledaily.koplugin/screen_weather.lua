@@ -15,18 +15,12 @@ local _ = require("gettext")
 
 local H = require("ui_helpers")
 local Prefs = require("prefs")
+local DateUtil = require("dateutil")
 local WeatherIcons = require("weather_icons")
 
 local WeatherScreen = {}
 
---- "2026-06-21T14:00" -> "2 PM"
-local function hourLabel(iso)
-    local hh = tonumber((iso or ""):sub(12, 13)) or 0
-    local ampm = hh < 12 and "AM" or "PM"
-    local h12 = hh % 12
-    if h12 == 0 then h12 = 12 end
-    return h12 .. " " .. ampm
-end
+-- Hour labels come from DateUtil.hourLabel (format-aware).
 
 --- "2026-06-21" -> "Sat" (today shows "Today")
 local function dayLabel(iso, idx)
@@ -119,7 +113,7 @@ function WeatherScreen.render(app)
             local cw = math.floor(w / math.min(#p.hourly, 6))
             local strip = HorizontalGroup:new{ align = "top" }
             for _, h in ipairs(p.hourly) do
-                table.insert(strip, cell(cw, hourLabel(h.time), (h.temp or "?") .. "°"))
+                table.insert(strip, cell(cw, DateUtil.hourLabel(h.time, prefs.clock24), (h.temp or "?") .. "°"))
             end
             table.insert(col, strip)
         end
@@ -140,7 +134,7 @@ function WeatherScreen.render(app)
 
         if wc.fetched_at then
             table.insert(col, H.vspan(H.s(14)))
-            table.insert(col, H.text("Updated " .. os.date("%-I:%M %p", wc.fetched_at),
+            table.insert(col, H.text("Updated " .. DateUtil.formatTime(wc.fetched_at, prefs.clock24),
                 H.SIZE.meta, false, Blitbuffer.COLOR_GRAY))
         end
     else

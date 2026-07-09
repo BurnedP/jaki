@@ -63,4 +63,26 @@ function DateUtil.dayStart4am(t)
     return fouram - DAY
 end
 
+--- "HH:MM" formatted per the 24-hour preference (12h adds AM/PM).
+function DateUtil.formatTime(t, use24)
+    t = t or os.time()
+    if use24 then
+        return os.date("%H:%M", t)
+    end
+    local h = tonumber(os.date("%I", t))
+    return h .. ":" .. os.date("%M", t) .. " " .. os.date("%p", t)
+end
+
+--- Forecast hour label from an ISO slot: "2026-06-21T14:00" -> "2 PM" / "14".
+function DateUtil.hourLabel(iso, use24)
+    local hh = tonumber((iso or ""):sub(12, 13)) or 0
+    if use24 then
+        return tostring(hh)
+    end
+    local ampm = hh < 12 and "AM" or "PM"
+    local h12 = hh % 12
+    if h12 == 0 then h12 = 12 end
+    return h12 .. " " .. ampm
+end
+
 return DateUtil

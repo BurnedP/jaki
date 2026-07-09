@@ -30,13 +30,7 @@ local Home = {}
 local MAX_ITEMS = 5
 local GRAY = Blitbuffer.COLOR_DARK_GRAY
 
-local function hourLabel(iso)
-    local hh = tonumber((iso or ""):sub(12, 13)) or 0
-    local ampm = hh < 12 and "AM" or "PM"
-    local h12 = hh % 12
-    if h12 == 0 then h12 = 12 end
-    return h12 .. " " .. ampm
-end
+-- Hour labels come from DateUtil.hourLabel (format-aware).
 
 -- ── Last-read book ───────────────────────────────────────────────────
 
@@ -130,7 +124,7 @@ local function weatherSection(app, w, prefs)
         for i = 1, n do
             local hh = p.hourly[i]
             local cell = VerticalGroup:new{ align = "center" }
-            table.insert(cell, H.text(hourLabel(hh.time), H.SIZE.meta, false, GRAY))
+            table.insert(cell, H.text(DateUtil.hourLabel(hh.time, prefs.clock24), H.SIZE.meta, false, GRAY))
             local hic = WeatherIcons.widget(hh.code, H.s(32))
             if hic then
                 table.insert(cell, H.vspan(H.s(4)))

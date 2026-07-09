@@ -25,6 +25,7 @@ local UIManager = require("ui/uimanager")
 local _ = require("gettext")
 
 local H = require("ui_helpers")
+local DateUtil = require("dateutil")
 
 local Screen = Device.screen
 
@@ -98,8 +99,10 @@ end
 -- ── Layout ───────────────────────────────────────────────────────────
 
 function App:_timeString()
-    local h = tonumber(os.date("%I"))
-    return tostring(h) .. ":" .. os.date("%M") .. " " .. os.date("%p")
+    local use24 = false
+    local ok, Prefs = pcall(require, "prefs")
+    if ok then use24 = Prefs.get().clock24 end
+    return DateUtil.formatTime(nil, use24)
 end
 
 function App:_batteryString()

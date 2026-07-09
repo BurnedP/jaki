@@ -18,6 +18,7 @@ local _ = require("gettext")
 
 local H = require("ui_helpers")
 local Prefs = require("prefs")
+local DateUtil = require("dateutil")
 
 local NewsScreen = {}
 
@@ -82,7 +83,7 @@ function NewsScreen.render(app)
 
     table.insert(col, H.vspan(H.s(6)))
     if cache.fetched_at then
-        table.insert(col, H.text("Updated " .. os.date("%-I:%M %p", cache.fetched_at),
+        table.insert(col, H.text("Updated " .. DateUtil.formatTime(cache.fetched_at, prefs.clock24),
             H.SIZE.meta, false, Blitbuffer.COLOR_GRAY))
     end
     table.insert(col, H.vspan(H.s(8)))
